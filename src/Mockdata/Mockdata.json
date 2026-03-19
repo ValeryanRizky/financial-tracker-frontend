@@ -1,0 +1,452 @@
+[
+    {
+        "id": 1,
+        "tanggal": "2026-01-01T09:00:00",
+        "kategori": "Pemasukan",
+        "keterangan": "Gaji Januari",
+        "tipe": "income",
+        "jumlah": 12000000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 2,
+        "tanggal": "2026-01-01T14:30:00",
+        "kategori": "Makanan",
+        "keterangan": "Makan Siang Keluarga",
+        "tipe": "expense",
+        "jumlah": 450000,
+        "metode": "Debit"
+    },
+    {
+        "id": 3,
+        "tanggal": "2026-01-02T10:00:00",
+        "kategori": "Tagihan",
+        "keterangan": "Sewa Kos",
+        "tipe": "expense",
+        "jumlah": 2500000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 4,
+        "tanggal": "2026-01-03T18:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Isi Bensin",
+        "tipe": "expense",
+        "jumlah": 150000,
+        "metode": "Cash"
+    },
+    {
+        "id": 5,
+        "tanggal": "2026-01-04T12:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Kopi Sore",
+        "tipe": "expense",
+        "jumlah": 35000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 6,
+        "tanggal": "2026-01-05T08:30:00",
+        "kategori": "Transportasi",
+        "keterangan": "Ojek Online",
+        "tipe": "expense",
+        "jumlah": 25000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 7,
+        "tanggal": "2026-01-06T19:00:00",
+        "kategori": "Belanja",
+        "keterangan": "Supermarket Mingguan",
+        "tipe": "expense",
+        "jumlah": 320000,
+        "metode": "Debit"
+    },
+    {
+        "id": 8,
+        "tanggal": "2026-01-07T13:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Makan Siang Kantor",
+        "tipe": "expense",
+        "jumlah": 40000,
+        "metode": "Cash"
+    },
+    {
+        "id": 9,
+        "tanggal": "2026-01-08T20:00:00",
+        "kategori": "Hiburan",
+        "keterangan": "Netflix Monthly",
+        "tipe": "expense",
+        "jumlah": 186000,
+        "metode": "Kartu Kredit"
+    },
+    {
+        "id": 10,
+        "tanggal": "2026-01-10T11:00:00",
+        "kategori": "Pemasukan",
+        "keterangan": "Bonus Project A",
+        "tipe": "income",
+        "jumlah": 2500000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 11,
+        "tanggal": "2026-01-11T15:00:00",
+        "kategori": "Kesehatan",
+        "keterangan": "Gym Membership",
+        "tipe": "expense",
+        "jumlah": 350000,
+        "metode": "Debit"
+    },
+    {
+        "id": 12,
+        "tanggal": "2026-01-12T09:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Ojek Online",
+        "tipe": "expense",
+        "jumlah": 22000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 13,
+        "tanggal": "2026-01-13T12:30:00",
+        "kategori": "Makanan",
+        "keterangan": "Warteg",
+        "tipe": "expense",
+        "jumlah": 25000,
+        "metode": "Cash"
+    },
+    {
+        "id": 14,
+        "tanggal": "2026-01-14T18:00:00",
+        "kategori": "Hobi",
+        "keterangan": "Beli Buku Self Improvement",
+        "tipe": "expense",
+        "jumlah": 95000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 15,
+        "tanggal": "2026-01-15T10:00:00",
+        "kategori": "Tagihan",
+        "keterangan": "Listrik & Air",
+        "tipe": "expense",
+        "jumlah": 450000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 16,
+        "tanggal": "2026-01-16T13:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Makan Siang",
+        "tipe": "expense",
+        "jumlah": 40000,
+        "metode": "Cash"
+    },
+    {
+        "id": 17,
+        "tanggal": "2026-01-17T19:30:00",
+        "kategori": "Hiburan",
+        "keterangan": "Nonton Bioskop",
+        "tipe": "expense",
+        "jumlah": 110000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 18,
+        "tanggal": "2026-01-18T11:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Isi Bensin",
+        "tipe": "expense",
+        "jumlah": 150000,
+        "metode": "Cash"
+    },
+    {
+        "id": 19,
+        "tanggal": "2026-01-19T08:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Ojek Online",
+        "tipe": "expense",
+        "jumlah": 28000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 20,
+        "tanggal": "2026-01-20T17:00:00",
+        "kategori": "Belanja",
+        "keterangan": "Beli Baju Kaos",
+        "tipe": "expense",
+        "jumlah": 150000,
+        "metode": "Debit"
+    },
+    {
+        "id": 21,
+        "tanggal": "2026-01-21T12:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Soto Ayam",
+        "tipe": "expense",
+        "jumlah": 30000,
+        "metode": "Cash"
+    },
+    {
+        "id": 22,
+        "tanggal": "2026-01-23T15:00:00",
+        "kategori": "Hobi",
+        "keterangan": "Top Up Game",
+        "tipe": "expense",
+        "jumlah": 200000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 23,
+        "tanggal": "2026-01-25T10:00:00",
+        "kategori": "Tagihan",
+        "keterangan": "Internet/WiFi",
+        "tipe": "expense",
+        "jumlah": 385000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 24,
+        "tanggal": "2026-01-26T12:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Ayam Geprek",
+        "tipe": "expense",
+        "jumlah": 25000,
+        "metode": "Cash"
+    },
+    {
+        "id": 25,
+        "tanggal": "2026-01-27T19:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Martabak Malam",
+        "tipe": "expense",
+        "jumlah": 60000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 26,
+        "tanggal": "2026-01-28T08:30:00",
+        "kategori": "Transportasi",
+        "keterangan": "Ojek Online",
+        "tipe": "expense",
+        "jumlah": 24000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 27,
+        "tanggal": "2026-01-29T13:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Nasi Goreng",
+        "tipe": "expense",
+        "jumlah": 20000,
+        "metode": "Cash"
+    },
+    {
+        "id": 28,
+        "tanggal": "2026-01-30T16:00:00",
+        "kategori": "Belanja",
+        "keterangan": "Skincare",
+        "tipe": "expense",
+        "jumlah": 275000,
+        "metode": "Debit"
+    },
+    {
+        "id": 29,
+        "tanggal": "2026-01-31T20:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Dinner Akhir Bulan",
+        "tipe": "expense",
+        "jumlah": 120000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 30,
+        "tanggal": "2026-02-01T09:00:00",
+        "kategori": "Pemasukan",
+        "keterangan": "Gaji Februari",
+        "tipe": "income",
+        "jumlah": 12000000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 31,
+        "tanggal": "2026-02-01T14:00:00",
+        "kategori": "Zakat",
+        "keterangan": "Sedekah Bulanan",
+        "tipe": "expense",
+        "jumlah": 500000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 32,
+        "tanggal": "2026-02-02T10:00:00",
+        "kategori": "Tagihan",
+        "keterangan": "Sewa Kos",
+        "tipe": "expense",
+        "jumlah": 2500000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 33,
+        "tanggal": "2026-02-02T18:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Sate Kambing",
+        "tipe": "expense",
+        "jumlah": 55000,
+        "metode": "Cash"
+    },
+    {
+        "id": 34,
+        "tanggal": "2026-02-03T08:30:00",
+        "kategori": "Transportasi",
+        "keterangan": "Ojek Online",
+        "tipe": "expense",
+        "jumlah": 26000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 35,
+        "tanggal": "2026-02-04T12:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Makan Siang Kantor",
+        "tipe": "expense",
+        "jumlah": 45000,
+        "metode": "Cash"
+    },
+    {
+        "id": 36,
+        "tanggal": "2026-02-05T19:00:00",
+        "kategori": "Belanja",
+        "keterangan": "Supermarket Mingguan",
+        "tipe": "expense",
+        "jumlah": 380000,
+        "metode": "Debit"
+    },
+    {
+        "id": 37,
+        "tanggal": "2026-02-06T13:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Mie Ayam",
+        "tipe": "expense",
+        "jumlah": 20000,
+        "metode": "Cash"
+    },
+    {
+        "id": 38,
+        "tanggal": "2026-02-07T15:00:00",
+        "kategori": "Hiburan",
+        "keterangan": "PlayStation Store",
+        "tipe": "expense",
+        "jumlah": 299000,
+        "metode": "Kartu Kredit"
+    },
+    {
+        "id": 39,
+        "tanggal": "2026-02-08T10:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Isi Bensin",
+        "tipe": "expense",
+        "jumlah": 150000,
+        "metode": "Cash"
+    },
+    {
+        "id": 40,
+        "tanggal": "2026-02-09T08:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Ojek Online",
+        "tipe": "expense",
+        "jumlah": 24000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 41,
+        "tanggal": "2026-02-09T17:00:00",
+        "kategori": "Kesehatan",
+        "keterangan": "Beli Vitamin C",
+        "tipe": "expense",
+        "jumlah": 85000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 42,
+        "tanggal": "2026-02-10T12:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Nasi Padang",
+        "tipe": "expense",
+        "jumlah": 40000,
+        "metode": "Cash"
+    },
+    {
+        "id": 43,
+        "tanggal": "2026-02-10T20:00:00",
+        "kategori": "Hiburan",
+        "keterangan": "Spotify Premium",
+        "tipe": "expense",
+        "jumlah": 55000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 44,
+        "tanggal": "2026-02-11T13:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Kopi Susu Gula Aren",
+        "tipe": "expense",
+        "jumlah": 28000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 45,
+        "tanggal": "2026-02-12T09:00:00",
+        "kategori": "Transportasi",
+        "keterangan": "Top Up E-Money",
+        "tipe": "expense",
+        "jumlah": 100000,
+        "metode": "Transfer"
+    },
+    {
+        "id": 46,
+        "tanggal": "2026-02-13T12:30:00",
+        "kategori": "Makanan",
+        "keterangan": "Makan Siang",
+        "tipe": "expense",
+        "jumlah": 35000,
+        "metode": "Cash"
+    },
+    {
+        "id": 47,
+        "tanggal": "2026-02-13T19:00:00",
+        "kategori": "Hiburan",
+        "keterangan": "Beli Tiket Konser",
+        "tipe": "expense",
+        "jumlah": 750000,
+        "metode": "Debit"
+    },
+    {
+        "id": 48,
+        "tanggal": "2026-02-14T10:00:00",
+        "kategori": "Pemasukan",
+        "keterangan": "Cashback E-Wallet",
+        "tipe": "income",
+        "jumlah": 50000,
+        "metode": "E-Wallet"
+    },
+    {
+        "id": 49,
+        "tanggal": "2026-02-14T15:00:00",
+        "kategori": "Belanja",
+        "keterangan": "Beli Cokelat & Bunga",
+        "tipe": "expense",
+        "jumlah": 250000,
+        "metode": "QRIS"
+    },
+    {
+        "id": 50,
+        "tanggal": "2026-02-14T20:00:00",
+        "kategori": "Makanan",
+        "keterangan": "Dinner Valentine",
+        "tipe": "expense",
+        "jumlah": 800000,
+        "metode": "Debit"
+    }
+]
