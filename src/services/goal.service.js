@@ -1,94 +1,75 @@
-const API_URL = 'http://localhost:5000/api';
-
-const getToken = () => localStorage.getItem('token');
-
-const handleResponse = async (response) => {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-    }
-    return data;
-};
+// src/services/goal.service.js
+import api from './api';
 
 export const goalService = {
     // Create goal
     create: async (goalData) => {
-        const response = await fetch(`${API_URL}/goals`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(goalData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.post('/goals', goalData);
+        } catch (error) {
+            console.error('Create goal error:', error);
+            throw error;
+        }
     },
 
     // Get all goals
     getAll: async (filters = {}) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`${API_URL}/goals?${queryParams}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            return await api.get(`/goals?${queryParams}`);
+        } catch (error) {
+            console.error('Get goals error:', error);
+            throw error;
+        }
     },
 
     // Get goal by ID
     getById: async (id) => {
-        const response = await fetch(`${API_URL}/goals/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get(`/goals/${id}`);
+        } catch (error) {
+            console.error('Get goal error:', error);
+            throw error;
+        }
     },
 
     // Update goal
     update: async (id, goalData) => {
-        const response = await fetch(`${API_URL}/goals/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(goalData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.put(`/goals/${id}`, goalData);
+        } catch (error) {
+            console.error('Update goal error:', error);
+            throw error;
+        }
     },
 
     // Delete goal
     delete: async (id) => {
-        const response = await fetch(`${API_URL}/goals/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.delete(`/goals/${id}`);
+        } catch (error) {
+            console.error('Delete goal error:', error);
+            throw error;
+        }
     },
 
     // Add contribution
     addContribution: async (id, amount) => {
-        const response = await fetch(`${API_URL}/goals/${id}/contribute`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ amount })
-        });
-        return handleResponse(response);
+        try {
+            return await api.patch(`/goals/${id}/contribute`, { amount });
+        } catch (error) {
+            console.error('Add contribution error:', error);
+            throw error;
+        }
     },
 
     // Get stats
     getStats: async () => {
-        const response = await fetch(`${API_URL}/goals/stats`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get('/goals/stats');
+        } catch (error) {
+            console.error('Get stats error:', error);
+            throw error;
+        }
     }
 };

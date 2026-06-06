@@ -1,46 +1,34 @@
-const API_URL = 'http://localhost:5000/api';
-
-const getToken = () => localStorage.getItem('token');
-
-const handleResponse = async (response) => {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-    }
-    return data;
-};
+// src/services/balance.service.js
+import api from './api';
 
 export const balanceService = {
     // Get balance
     getBalance: async () => {
-        const response = await fetch(`${API_URL}/balance`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get('/balance');
+        } catch (error) {
+            console.error('Get balance error:', error);
+            throw error;
+        }
     },
 
     // Update balance
     updateBalance: async (amount) => {
-        const response = await fetch(`${API_URL}/balance`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ amount })
-        });
-        return handleResponse(response);
+        try {
+            return await api.put('/balance', { amount });
+        } catch (error) {
+            console.error('Update balance error:', error);
+            throw error;
+        }
     },
 
     // Get summary (balance + all goals)
     getSummary: async () => {
-        const response = await fetch(`${API_URL}/balance/summary`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get('/balance/summary');
+        } catch (error) {
+            console.error('Get summary error:', error);
+            throw error;
+        }
     }
 };

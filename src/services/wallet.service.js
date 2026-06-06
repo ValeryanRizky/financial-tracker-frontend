@@ -1,107 +1,95 @@
-const API_URL = 'http://localhost:5000/api';
-
-const getToken = () => localStorage.getItem('token');
-
-const handleResponse = async (response) => {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-    }
-    return data;
-};
+// src/services/wallet.service.js
+import api from './api';
 
 export const walletService = {
     // Create wallet
     create: async (walletData) => {
-        const response = await fetch(`${API_URL}/wallets`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(walletData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.post('/wallets', walletData);
+        } catch (error) {
+            console.error('Create wallet error:', error);
+            throw error;
+        }
     },
 
     // Get all wallets
     getAll: async (filters = {}) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`${API_URL}/wallets?${queryParams}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            return await api.get(`/wallets?${queryParams}`);
+        } catch (error) {
+            console.error('Get wallets error:', error);
+            throw error;
+        }
     },
 
     // Get wallet by ID
     getById: async (id) => {
-        const response = await fetch(`${API_URL}/wallets/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get(`/wallets/${id}`);
+        } catch (error) {
+            console.error('Get wallet error:', error);
+            throw error;
+        }
     },
 
     // Update wallet
     update: async (id, walletData) => {
-        const response = await fetch(`${API_URL}/wallets/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(walletData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.put(`/wallets/${id}`, walletData);
+        } catch (error) {
+            console.error('Update wallet error:', error);
+            throw error;
+        }
+    },
+
+    // Update balance (method utama yang dipakai)
+    updateBalance: async (id, balance) => {
+        try {
+            return await api.patch(`/wallets/${id}/balance`, { balance });
+        } catch (error) {
+            console.error('Update balance error:', error);
+            throw error;
+        }
     },
 
     // Delete wallet
     delete: async (id) => {
-        const response = await fetch(`${API_URL}/wallets/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.delete(`/wallets/${id}`);
+        } catch (error) {
+            console.error('Delete wallet error:', error);
+            throw error;
+        }
     },
 
     // Get summary
     getSummary: async () => {
-        const response = await fetch(`${API_URL}/wallets/summary`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get('/wallets/summary');
+        } catch (error) {
+            console.error('Get summary error:', error);
+            throw error;
+        }
     },
 
-    // 🔥 PERBAIKAN: Add balance to wallet
+    // Add balance to wallet
     addBalance: async (walletId, amount) => {
-        const response = await fetch(`${API_URL}/wallets/${walletId}/add-balance`, {
-            method: 'PATCH', // atau 'PUT' tergantung backend Anda
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ amount })
-        });
-        return handleResponse(response);
+        try {
+            return await api.patch(`/wallets/${walletId}/add-balance`, { amount });
+        } catch (error) {
+            console.error('Add balance error:', error);
+            throw error;
+        }
     },
 
-    // 🔥 PERBAIKAN: Subtract balance from wallet
+    // Subtract balance from wallet
     subtractBalance: async (walletId, amount) => {
-        const response = await fetch(`${API_URL}/wallets/${walletId}/subtract-balance`, {
-            method: 'PATCH', // atau 'PUT' tergantung backend Anda
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ amount })
-        });
-        return handleResponse(response);
-    },
+        try {
+            return await api.patch(`/wallets/${walletId}/subtract-balance`, { amount });
+        } catch (error) {
+            console.error('Subtract balance error:', error);
+            throw error;
+        }
+    }
 };

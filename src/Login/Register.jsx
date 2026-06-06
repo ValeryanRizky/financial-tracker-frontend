@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, Mail, Lock, User, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/auth.service';  // ← TAMBAHKAN IMPORT INI
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
@@ -20,26 +21,14 @@ export default function Register() {
         setSuccess('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: name,
-                    email: email,
-                    password: password
-                })
+            // ✅ PAKAI authService, BUKAN fetch langsung!
+            const response = await authService.register({
+                name: name,
+                email: email,
+                password: password
             });
 
-            const data = await response.json();
-
-            if (data.success) {
-                // Simpan token
-                localStorage.setItem('token', data.data.token);
-                localStorage.setItem('user', JSON.stringify(data.data.user));
-
-                // Tampilkan pesan sukses
+            if (response.success) {
                 setSuccess('Registration successful! Redirecting to login...');
 
                 // Redirect ke halaman login setelah 2 detik
@@ -47,11 +36,11 @@ export default function Register() {
                     navigate('/');
                 }, 2000);
             } else {
-                setError(data.message || 'Registration failed');
+                setError(response.message || 'Registration failed');
             }
         } catch (error) {
             console.error('Register error:', error);
-            setError('Network error. Please try again.');
+            setError(error.message || 'Network error. Please try again.');
         } finally {
             setLoading(false);
         }

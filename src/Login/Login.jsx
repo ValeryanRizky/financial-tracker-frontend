@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/auth.service';  // ← TAMBAHKAN IMPORT INI
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -17,32 +18,18 @@ export default function Login() {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            });
+            // ✅ PAKAI authService, BUKAN fetch langsung!
+            const response = await authService.login(email, password);
 
-            const data = await response.json();
-
-            if (data.success) {
-                // Simpan token dan user data
-                localStorage.setItem('token', data.data.token);
-                localStorage.setItem('user', JSON.stringify(data.data.user));
-
+            if (response.success) {
                 // Redirect ke Dashboard
                 navigate('/Dashboard');
             } else {
-                setError(data.message || 'Login failed');
+                setError(response.message || 'Login failed');
             }
         } catch (error) {
             console.error('Login error:', error);
-            setError('Network error. Please try again.');
+            setError(error.message || 'Network error. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -50,7 +37,7 @@ export default function Login() {
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#e2e8f0]">
-            {/* Background blur elements - sama seperti sebelumnya */}
+            {/* Background blur elements */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-300/40 blur-[120px] animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-300/30 blur-[120px]" />
 

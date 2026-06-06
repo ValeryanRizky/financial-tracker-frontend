@@ -1,86 +1,68 @@
-const API_URL = 'http://localhost:5000/api';
-
-// Helper untuk get token
-const getToken = () => localStorage.getItem('token');
-
-// Helper untuk handle response
-const handleResponse = async (response) => {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-    }
-    return data;
-};
+// src/services/transaction.service.js
+import api from './api';
 
 // Income Services
 export const incomeService = {
     // Create income
     create: async (incomeData) => {
-        const response = await fetch(`${API_URL}/incomes`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(incomeData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.post('/incomes', incomeData);
+        } catch (error) {
+            console.error('Create income error:', error);
+            throw error;
+        }
     },
 
     // Get all incomes
     getAll: async (filters = {}) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`${API_URL}/incomes?${queryParams}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            return await api.get(`/incomes?${queryParams}`);
+        } catch (error) {
+            console.error('Get incomes error:', error);
+            throw error;
+        }
     },
 
     // Get income by ID
     getById: async (id) => {
-        const response = await fetch(`${API_URL}/incomes/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get(`/incomes/${id}`);
+        } catch (error) {
+            console.error('Get income error:', error);
+            throw error;
+        }
     },
 
     // Update income
     update: async (id, incomeData) => {
-        const response = await fetch(`${API_URL}/incomes/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(incomeData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.put(`/incomes/${id}`, incomeData);
+        } catch (error) {
+            console.error('Update income error:', error);
+            throw error;
+        }
     },
 
     // Delete income
     delete: async (id) => {
-        const response = await fetch(`${API_URL}/incomes/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.delete(`/incomes/${id}`);
+        } catch (error) {
+            console.error('Delete income error:', error);
+            throw error;
+        }
     },
 
     // Get category summary
     getCategorySummary: async (startDate, endDate) => {
-        const queryParams = new URLSearchParams({ startDate, endDate }).toString();
-        const response = await fetch(`${API_URL}/incomes/summary/category?${queryParams}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            const queryParams = new URLSearchParams({ startDate, endDate }).toString();
+            return await api.get(`/incomes/summary/category?${queryParams}`);
+        } catch (error) {
+            console.error('Get category summary error:', error);
+            throw error;
+        }
     }
 };
 
@@ -88,80 +70,73 @@ export const incomeService = {
 export const expenseService = {
     // Create expense
     create: async (expenseData) => {
-        const response = await fetch(`${API_URL}/expenses`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(expenseData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.post('/expenses', expenseData);
+        } catch (error) {
+            console.error('Create expense error:', error);
+            throw error;
+        }
     },
 
     // Get all expenses
     getAll: async (filters = {}) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`${API_URL}/expenses?${queryParams}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            return await api.get(`/expenses?${queryParams}`);
+        } catch (error) {
+            console.error('Get expenses error:', error);
+            throw error;
+        }
     },
 
     // Get expense by ID
     getById: async (id) => {
-        const response = await fetch(`${API_URL}/expenses/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get(`/expenses/${id}`);
+        } catch (error) {
+            console.error('Get expense error:', error);
+            throw error;
+        }
     },
 
     // Update expense
     update: async (id, expenseData) => {
-        const response = await fetch(`${API_URL}/expenses/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(expenseData)
-        });
-        return handleResponse(response);
+        try {
+            return await api.put(`/expenses/${id}`, expenseData);
+        } catch (error) {
+            console.error('Update expense error:', error);
+            throw error;
+        }
     },
 
     // Delete expense
     delete: async (id) => {
-        const response = await fetch(`${API_URL}/expenses/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.delete(`/expenses/${id}`);
+        } catch (error) {
+            console.error('Delete expense error:', error);
+            throw error;
+        }
     },
 
     // Get category summary
     getCategorySummary: async (startDate, endDate) => {
-        const queryParams = new URLSearchParams({ startDate, endDate }).toString();
-        const response = await fetch(`${API_URL}/expenses/summary/category?${queryParams}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            const queryParams = new URLSearchParams({ startDate, endDate }).toString();
+            return await api.get(`/expenses/summary/category?${queryParams}`);
+        } catch (error) {
+            console.error('Get category summary error:', error);
+            throw error;
+        }
     },
 
     // Get monthly summary
     getMonthlySummary: async (year, month) => {
-        const response = await fetch(`${API_URL}/expenses/summary/monthly/${year}/${month}`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        });
-        return handleResponse(response);
+        try {
+            return await api.get(`/expenses/summary/monthly/${year}/${month}`);
+        } catch (error) {
+            console.error('Get monthly summary error:', error);
+            throw error;
+        }
     }
 };
