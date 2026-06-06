@@ -1,53 +1,37 @@
-// services/auth.service.js
-const API_URL = 'http://localhost:5000/api';
-
-// Helper untuk get token
-const getToken = () => localStorage.getItem('token');
-
-// Helper untuk handle response
-const handleResponse = async (response) => {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-    }
-    return data;
-};
+// src/services/auth.service.js
+import api from './api';
 
 export const authService = {
     // Login
     login: async (email, password) => {
-        const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await handleResponse(response);
-        if (data.success && data.data) {
-            const { token, user } = data.data;
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
+        try {
+            const response = await api.post('/auth/login', { email, password });
+            if (response.success && response.data) {
+                const { token, user } = response.data;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+            }
+            return response;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-        return data;
     },
 
     // Register
     register: async (userData) => {
-        const response = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        });
-        const data = await handleResponse(response);
-        if (data.success && data.data) {
-            const { token, user } = data.data;
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
+        try {
+            const response = await api.post('/auth/register', userData);
+            if (response.success && response.data) {
+                const { token, user } = response.data;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+            }
+            return response;
+        } catch (error) {
+            console.error('Register error:', error);
+            throw error;
         }
-        return data;
     },
 
     // Logout
@@ -80,45 +64,39 @@ export const authService = {
 
     // Fetch user profile from backend
     getProfile: async () => {
-        const response = await fetch(`${API_URL}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
+        try {
+            const response = await api.get('/auth/me');
+            if (response.success && response.data) {
+                localStorage.setItem('user', JSON.stringify(response.data));
             }
-        });
-        const data = await handleResponse(response);
-        if (data.success && data.data) {
-            localStorage.setItem('user', JSON.stringify(data.data));
+            return response;
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+            throw error;
         }
-        return data;
     },
 
     // Update profile
     updateProfile: async (userData) => {
-        const response = await fetch(`${API_URL}/users/profile`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(userData)
-        });
-        const data = await handleResponse(response);
-        if (data.success && data.data) {
-            localStorage.setItem('user', JSON.stringify(data.data));
+        try {
+            const response = await api.put('/users/profile', userData);
+            if (response.success && response.data) {
+                localStorage.setItem('user', JSON.stringify(response.data));
+            }
+            return response;
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            throw error;
         }
-        return data;
     },
 
     // Change password
     changePassword: async (oldPassword, newPassword) => {
-        const response = await fetch(`${API_URL}/auth/change-password`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ oldPassword, newPassword })
-        });
-        return handleResponse(response);
+        try {
+            return await api.put('/auth/change-password', { oldPassword, newPassword });
+        } catch (error) {
+            console.error('Error changing password:', error);
+            throw error;
+        }
     }
 };
