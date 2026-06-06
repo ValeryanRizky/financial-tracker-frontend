@@ -1,9 +1,6 @@
-// src/services/transaction.service.js
 import api from './api';
 
-// Income Services
 export const incomeService = {
-    // Create income
     create: async (incomeData) => {
         try {
             return await api.post('/incomes', incomeData);
@@ -13,7 +10,6 @@ export const incomeService = {
         }
     },
 
-    // Get all incomes
     getAll: async (filters = {}) => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
@@ -24,7 +20,6 @@ export const incomeService = {
         }
     },
 
-    // Get income by ID
     getById: async (id) => {
         try {
             return await api.get(`/incomes/${id}`);
@@ -34,7 +29,6 @@ export const incomeService = {
         }
     },
 
-    // Update income
     update: async (id, incomeData) => {
         try {
             return await api.put(`/incomes/${id}`, incomeData);
@@ -44,7 +38,6 @@ export const incomeService = {
         }
     },
 
-    // Delete income
     delete: async (id) => {
         try {
             return await api.delete(`/incomes/${id}`);
@@ -54,7 +47,6 @@ export const incomeService = {
         }
     },
 
-    // Get category summary
     getCategorySummary: async (startDate, endDate) => {
         try {
             const queryParams = new URLSearchParams({ startDate, endDate }).toString();
@@ -66,9 +58,7 @@ export const incomeService = {
     }
 };
 
-// Expense Services
 export const expenseService = {
-    // Create expense
     create: async (expenseData) => {
         try {
             return await api.post('/expenses', expenseData);
@@ -78,7 +68,6 @@ export const expenseService = {
         }
     },
 
-    // Get all expenses
     getAll: async (filters = {}) => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
@@ -89,7 +78,6 @@ export const expenseService = {
         }
     },
 
-    // Get expense by ID
     getById: async (id) => {
         try {
             return await api.get(`/expenses/${id}`);
@@ -99,7 +87,6 @@ export const expenseService = {
         }
     },
 
-    // Update expense
     update: async (id, expenseData) => {
         try {
             return await api.put(`/expenses/${id}`, expenseData);
@@ -109,7 +96,6 @@ export const expenseService = {
         }
     },
 
-    // Delete expense
     delete: async (id) => {
         try {
             return await api.delete(`/expenses/${id}`);
@@ -119,7 +105,6 @@ export const expenseService = {
         }
     },
 
-    // Get category summary
     getCategorySummary: async (startDate, endDate) => {
         try {
             const queryParams = new URLSearchParams({ startDate, endDate }).toString();
@@ -130,7 +115,6 @@ export const expenseService = {
         }
     },
 
-    // Get monthly summary
     getMonthlySummary: async (year, month) => {
         try {
             return await api.get(`/expenses/summary/monthly/${year}/${month}`);

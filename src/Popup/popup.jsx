@@ -268,60 +268,62 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
         <AnimatePresence>
             {isOpen && (
                 <>
+                    {/* Overlay */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
+                        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
                         onClick={handleClose}
                     />
 
-                    <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+                    {/* Modal Container - Responsive */}
+                    <div className="fixed inset-0 z-[101] flex items-center justify-center p-3 sm:p-4 pointer-events-none">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 400 }}
-                            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
+                            className="relative w-full max-w-[95%] sm:max-w-md bg-white rounded-2xl sm:rounded-2xl shadow-xl pointer-events-auto overflow-hidden max-h-[90vh] overflow-y-auto"
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
-                                        {type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                            <div className="sticky top-0 z-10 bg-white flex items-center justify-between p-4 sm:p-5 border-b border-slate-100">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
+                                        {type === 'income' ? <TrendingUp size={16} className="sm:w-5 sm:h-5" /> : <TrendingDown size={16} className="sm:w-5 sm:h-5" />}
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-semibold text-slate-800">
+                                        <h2 className="text-base sm:text-lg font-semibold text-slate-800">
                                             {type === 'income' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran'}
                                         </h2>
-                                        <p className="text-xs text-slate-400">Isi detail transaksi Anda</p>
+                                        <p className="text-[10px] sm:text-xs text-slate-400">Isi detail transaksi Anda</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={handleClose}
-                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                    className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                                 >
-                                    <X size={18} />
+                                    <X size={16} className="sm:w-5 sm:h-5" />
                                 </button>
                             </div>
 
-                            {/* Content - ukuran sedang */}
-                            <div className="p-5">
+                            {/* Content */}
+                            <div className="p-4 sm:p-5">
                                 {error && (
                                     <motion.div
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-2"
+                                        className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs sm:text-sm flex items-center gap-2"
                                     >
                                         <span>⚠️</span>
                                         {error}
                                     </motion.div>
                                 )}
 
-                                <form onSubmit={handleSubmit} className="space-y-4">
+                                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                                     {/* Type Toggle */}
-                                    <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                                    <div className="flex gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-xl">
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -335,7 +337,7 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                                 }));
                                                 setError('');
                                             }}
-                                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`}
+                                            className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`}
                                         >
                                             Pemasukan
                                         </button>
@@ -352,7 +354,7 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                                 }));
                                                 setError('');
                                             }}
-                                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${type === 'expense' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500'}`}
+                                            className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${type === 'expense' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500'}`}
                                         >
                                             Pengeluaran
                                         </button>
@@ -360,15 +362,15 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
 
                                     {/* Amount */}
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Nominal</label>
+                                        <label className="block text-[10px] sm:text-xs font-medium text-slate-500 mb-1 sm:mb-1.5">Nominal</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Rp</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs sm:text-sm">Rp</span>
                                             <input
                                                 type="text"
                                                 placeholder="0"
                                                 value={formData.amount}
                                                 onChange={handleAmountChange}
-                                                className="w-full pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-base font-medium focus:border-emerald-300 focus:bg-white outline-none transition-all"
+                                                className="w-full pl-7 sm:pl-8 pr-3 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-base font-medium focus:border-emerald-300 focus:bg-white outline-none transition-all"
                                                 disabled={loading}
                                             />
                                         </div>
@@ -376,25 +378,25 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
 
                                     {/* Wallet Selection */}
                                     <div>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <label className="block text-xs font-medium text-slate-500">
+                                        <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+                                            <label className="block text-[10px] sm:text-xs font-medium text-slate-500">
                                                 {type === 'income' ? 'Wallet Tujuan' : 'Wallet Sumber'}
                                             </label>
                                             <button
                                                 type="button"
                                                 onClick={refreshWallets}
                                                 disabled={refreshing}
-                                                className="p-1 text-slate-400 hover:text-emerald-500 transition-all"
+                                                className="p-0.5 sm:p-1 text-slate-400 hover:text-emerald-500 transition-all"
                                             >
-                                                <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+                                                <RefreshCw size={10} className="sm:w-3 sm:h-3" />
                                             </button>
                                         </div>
                                         {loadingWallets || refreshing ? (
-                                            <div className="flex justify-center py-3">
-                                                <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                            <div className="flex justify-center py-2 sm:py-3">
+                                                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                                             </div>
                                         ) : wallets.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                                 {wallets.map((wallet) => {
                                                     const isSelected = formData.walletId === wallet.id;
                                                     return (
@@ -402,14 +404,14 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleSelectWallet(wallet.id, wallet.name)}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${isSelected
+                                                                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 ${isSelected
                                                                     ? (type === 'income' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')
                                                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                                     }`}
                                                             >
-                                                                <Wallet size={12} />
+                                                                <Wallet size={10} className="sm:w-3 sm:h-3" />
                                                                 {wallet.name}
-                                                                {isSelected && <Check size={10} className="ml-1" />}
+                                                                {isSelected && <Check size={8} className="sm:w-2.5 sm:h-2.5" />}
                                                             </button>
                                                             {wallet.name !== 'Cash' && (
                                                                 <button
@@ -417,7 +419,7 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                                                     onClick={() => handleDeleteWallet(wallet.id, wallet.name)}
                                                                     className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 p-0.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
                                                                 >
-                                                                    <Trash2 size={10} />
+                                                                    <Trash2 size={8} className="sm:w-2.5 sm:h-2.5" />
                                                                 </button>
                                                             )}
                                                         </div>
@@ -425,7 +427,7 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                                 })}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-3 text-slate-400 text-sm">
+                                            <div className="text-center py-2 sm:py-3 text-slate-400 text-[10px] sm:text-xs">
                                                 Belum ada wallet. Tambah wallet baru di bawah
                                             </div>
                                         )}
@@ -437,9 +439,9 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                             type="button"
                                             onClick={() => setShowCustomWallet(true)}
                                             disabled={creatingWallet}
-                                            className="w-full py-2.5 border border-dashed border-emerald-300 rounded-xl text-emerald-600 text-sm font-medium hover:bg-emerald-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                            className="w-full py-1.5 sm:py-2.5 border border-dashed border-emerald-300 rounded-xl text-emerald-600 text-[10px] sm:text-sm font-medium hover:bg-emerald-50 transition-all flex items-center justify-center gap-1 sm:gap-2 disabled:opacity-50"
                                         >
-                                            <Plus size={14} />
+                                            <Plus size={12} className="sm:w-4 sm:h-4" />
                                             Tambah Wallet Baru
                                         </button>
                                     ) : (
@@ -447,32 +449,32 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-2"
+                                            className="space-y-1.5 sm:space-y-2"
                                         >
                                             <input
                                                 type="text"
-                                                placeholder="Contoh: Bank BRI, Bank BNI, GoPay, OVO"
+                                                placeholder="Contoh: Bank BRI, GoPay, OVO"
                                                 value={customWalletName}
                                                 onChange={(e) => setCustomWalletName(e.target.value)}
-                                                className="w-full px-3 py-2.5 bg-slate-50 border border-emerald-200 rounded-xl text-sm outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2.5 bg-slate-50 border border-emerald-200 rounded-xl text-xs sm:text-sm outline-none focus:border-emerald-400 focus:bg-white transition-all"
                                                 autoFocus
                                                 disabled={creatingWallet}
                                             />
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-1.5 sm:gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={handleAddCustomWallet}
                                                     disabled={creatingWallet}
-                                                    className="flex-1 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                    className="flex-1 py-1.5 sm:py-2 bg-emerald-500 text-white rounded-lg text-[10px] sm:text-sm font-medium hover:bg-emerald-600 transition-all disabled:opacity-50 flex items-center justify-center gap-1 sm:gap-2"
                                                 >
                                                     {creatingWallet ? (
                                                         <>
-                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                                             <span>Membuat...</span>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Plus size={14} />
+                                                            <Plus size={12} className="sm:w-4 sm:h-4" />
                                                             <span>Buat Wallet</span>
                                                         </>
                                                     )}
@@ -484,7 +486,7 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                                         setCustomWalletName('');
                                                         setError('');
                                                     }}
-                                                    className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition-all"
+                                                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-100 text-slate-600 rounded-lg text-[10px] sm:text-sm font-medium hover:bg-slate-200 transition-all"
                                                     disabled={creatingWallet}
                                                 >
                                                     Batal
@@ -495,14 +497,14 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
 
                                     {/* Category */}
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Kategori</label>
-                                        <div className="flex flex-wrap gap-1.5">
+                                        <label className="block text-[10px] sm:text-xs font-medium text-slate-500 mb-1 sm:mb-1.5">Kategori</label>
+                                        <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                             {categories.map((cat) => (
                                                 <button
                                                     key={cat}
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, category: cat })}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${formData.category === cat
+                                                    className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${formData.category === cat
                                                         ? (type === 'income' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')
                                                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                                         }`}
@@ -515,13 +517,13 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
 
                                     {/* Description */}
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Catatan (Opsional)</label>
+                                        <label className="block text-[10px] sm:text-xs font-medium text-slate-500 mb-1 sm:mb-1.5">Catatan (Opsional)</label>
                                         <input
                                             type="text"
                                             placeholder="Tambah catatan..."
                                             value={formData.description}
                                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-300 focus:bg-white transition-all"
+                                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:border-emerald-300 focus:bg-white transition-all"
                                             disabled={loading}
                                         />
                                     </div>
@@ -530,19 +532,19 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
                                     <button
                                         type="submit"
                                         disabled={loading || !formData.walletId}
-                                        className={`w-full py-3 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 text-sm ${type === 'income'
+                                        className={`w-full py-2 sm:py-3 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm ${type === 'income'
                                             ? 'bg-emerald-500 hover:bg-emerald-600'
                                             : 'bg-rose-500 hover:bg-rose-600'
                                             } ${(loading || !formData.walletId) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     >
                                         {loading ? (
                                             <>
-                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                                 <span>Menyimpan...</span>
                                             </>
                                         ) : (
                                             <>
-                                                <Check size={16} />
+                                                <Check size={14} className="sm:w-4 sm:h-4" />
                                                 <span>Simpan {type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span>
                                             </>
                                         )}

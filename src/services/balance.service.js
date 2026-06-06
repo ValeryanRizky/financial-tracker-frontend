@@ -1,8 +1,6 @@
-// src/services/balance.service.js
 import api from './api';
 
 export const balanceService = {
-    // Get balance
     getBalance: async () => {
         try {
             return await api.get('/balance');
@@ -12,7 +10,6 @@ export const balanceService = {
         }
     },
 
-    // Update balance
     updateBalance: async (amount) => {
         try {
             return await api.put('/balance', { amount });
@@ -22,7 +19,6 @@ export const balanceService = {
         }
     },
 
-    // Get summary (balance + all goals)
     getSummary: async () => {
         try {
             return await api.get('/balance/summary');

@@ -1,8 +1,6 @@
-// src/services/goal.service.js
 import api from './api';
 
 export const goalService = {
-    // Create goal
     create: async (goalData) => {
         try {
             return await api.post('/goals', goalData);
@@ -12,7 +10,6 @@ export const goalService = {
         }
     },
 
-    // Get all goals
     getAll: async (filters = {}) => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
@@ -23,7 +20,6 @@ export const goalService = {
         }
     },
 
-    // Get goal by ID
     getById: async (id) => {
         try {
             return await api.get(`/goals/${id}`);
@@ -33,7 +29,6 @@ export const goalService = {
         }
     },
 
-    // Update goal
     update: async (id, goalData) => {
         try {
             return await api.put(`/goals/${id}`, goalData);
@@ -43,7 +38,6 @@ export const goalService = {
         }
     },
 
-    // Delete goal
     delete: async (id) => {
         try {
             return await api.delete(`/goals/${id}`);
@@ -53,7 +47,6 @@ export const goalService = {
         }
     },
 
-    // Add contribution
     addContribution: async (id, amount) => {
         try {
             return await api.patch(`/goals/${id}/contribute`, { amount });
@@ -63,7 +56,6 @@ export const goalService = {
         }
     },
 
-    // Get stats
     getStats: async () => {
         try {
             return await api.get('/goals/stats');

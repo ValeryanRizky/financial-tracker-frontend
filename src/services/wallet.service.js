@@ -1,8 +1,6 @@
-// src/services/wallet.service.js
 import api from './api';
 
 export const walletService = {
-    // Create wallet
     create: async (walletData) => {
         try {
             return await api.post('/wallets', walletData);
@@ -12,7 +10,6 @@ export const walletService = {
         }
     },
 
-    // Get all wallets
     getAll: async (filters = {}) => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
@@ -23,7 +20,6 @@ export const walletService = {
         }
     },
 
-    // Get wallet by ID
     getById: async (id) => {
         try {
             return await api.get(`/wallets/${id}`);
@@ -33,7 +29,6 @@ export const walletService = {
         }
     },
 
-    // Update wallet
     update: async (id, walletData) => {
         try {
             return await api.put(`/wallets/${id}`, walletData);
@@ -43,7 +38,6 @@ export const walletService = {
         }
     },
 
-    // Update balance (method utama yang dipakai)
     updateBalance: async (id, balance) => {
         try {
             return await api.patch(`/wallets/${id}/balance`, { balance });
@@ -53,7 +47,6 @@ export const walletService = {
         }
     },
 
-    // Delete wallet
     delete: async (id) => {
         try {
             return await api.delete(`/wallets/${id}`);
@@ -63,7 +56,6 @@ export const walletService = {
         }
     },
 
-    // Get summary
     getSummary: async () => {
         try {
             return await api.get('/wallets/summary');
@@ -73,7 +65,6 @@ export const walletService = {
         }
     },
 
-    // Add balance to wallet
     addBalance: async (walletId, amount) => {
         try {
             return await api.patch(`/wallets/${walletId}/add-balance`, { amount });
@@ -83,7 +74,6 @@ export const walletService = {
         }
     },
 
-    // Subtract balance from wallet
     subtractBalance: async (walletId, amount) => {
         try {
             return await api.patch(`/wallets/${walletId}/subtract-balance`, { amount });

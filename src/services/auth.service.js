@@ -1,8 +1,6 @@
-// src/services/auth.service.js
 import api from "./api";
 
 export const authService = {
-    // Login
     login: async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
@@ -18,7 +16,6 @@ export const authService = {
         }
     },
 
-    // Register
     register: async (userData) => {
         try {
             const response = await api.post('/auth/register', userData);
@@ -34,14 +31,12 @@ export const authService = {
         }
     },
 
-    // Logout
     logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
     },
 
-    // Get current user from localStorage
     getCurrentUser: () => {
         try {
             const user = localStorage.getItem('user');
@@ -52,17 +47,14 @@ export const authService = {
         }
     },
 
-    // Get token
     getToken: () => {
         return localStorage.getItem('token');
     },
 
-    // Check if user is authenticated
     isAuthenticated: () => {
         return !!localStorage.getItem('token');
     },
 
-    // Fetch user profile from backend
     getProfile: async () => {
         try {
             const response = await api.get('/auth/me');
@@ -76,7 +68,6 @@ export const authService = {
         }
     },
 
-    // Update profile
     updateProfile: async (userData) => {
         try {
             const response = await api.put('/users/profile', userData);
@@ -90,7 +81,6 @@ export const authService = {
         }
     },
 
-    // Change password
     changePassword: async (oldPassword, newPassword) => {
         try {
             return await api.put('/auth/change-password', { oldPassword, newPassword });
