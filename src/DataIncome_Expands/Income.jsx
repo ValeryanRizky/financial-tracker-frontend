@@ -12,6 +12,8 @@ import {
     FileText,
     Check
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Sidebar from '../Sidebar/sidebar';
 import { incomeService } from '../services/transaction.service';
 
@@ -22,6 +24,7 @@ export default function Income() {
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const [exportSuccess, setExportSuccess] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     // Fetch data dari backend
     const fetchIncomes = useCallback(async () => {
@@ -70,52 +73,178 @@ export default function Income() {
         }).format(amount);
     };
 
-    // ========== FUNGSI EXPORT ==========
-    const handleExport = () => {
+    const formatNumber = (amount) => {
+        return new Intl.NumberFormat('id-ID').format(amount);
+    };
+
+    // ========== FUNGSI EXPORT PDF ==========
+    const handleExportPDF = async () => {
+        if (incomes.length === 0) {
+            alert('Tidak ada data untuk diekspor');
+            return;
+        }
+
+        setExporting(true);
+
         try {
-            // Siapkan data untuk export
-            const exportData = incomes.map(inc => ({
-                'Tanggal': new Date(inc.tanggal).toLocaleDateString('id-ID'),
-                'Keterangan': inc.keterangan,
-                'Kategori': inc.kategori,
-                'Metode': inc.metode,
-                'Jumlah': inc.jumlah,
-                'Status': 'Berhasil'
-            }));
+            // Buat dokumen PDF
+            const doc = new jsPDF();
+            const currentDate = new Date().toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
 
-            // Buat header CSV
-            const headers = ['Tanggal', 'Keterangan', 'Kategori', 'Metode', 'Jumlah', 'Status'];
+            const currentTime = new Date().toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
 
-            // Konversi ke CSV
-            const csvContent = [
-                headers.join(','),
-                ...exportData.map(row =>
-                    Object.values(row).map(value =>
-                        typeof value === 'string' && value.includes(',') ? `"${value}"` : value
-                    ).join(',')
-                )
-            ].join('\n');
+            // Header dengan warna
+            doc.setFillColor(16, 185, 129);
+            doc.rect(0, 0, 210, 35, 'F');
 
-            // Buat blob dan download
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('LAPORAN PEMASUKAN', 105, 22, { align: 'center' });
 
-            // Nama file dengan timestamp
-            const date = new Date().toISOString().split('T')[0];
-            link.setAttribute('href', url);
-            link.setAttribute('download', `pemasukan_${date}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Informasi tanggal cetak
+            doc.setTextColor(100, 116, 139);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Dicetak: ${currentDate} | ${currentTime}`, 20, 48);
 
-            // Tampilkan notifikasi sukses
+            // Garis pemisah
+            doc.setDrawColor(226, 232, 240);
+            doc.line(20, 52, 190, 52);
+
+            // Hitung statistik
+            const totalIncome = incomes.reduce((sum, inc) => sum + inc.jumlah, 0);
+            const transactionCount = incomes.length;
+            const categories = incomes.reduce((acc, inc) => {
+                acc[inc.kategori] = (acc[inc.kategori] || 0) + inc.jumlah;
+                return acc;
+            }, {});
+            const topCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
+
+            // Box Statistik
+            doc.setFillColor(249, 250, 251);
+            doc.roundedRect(20, 60, 170, 40, 5, 5, 'F');
+
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('RINGKASAN', 25, 72);
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            doc.text('Total Pemasukan:', 25, 82);
+            doc.setTextColor(16, 185, 129);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Rp ${formatNumber(totalIncome)}`, 70, 82);
+
+            doc.setTextColor(71, 85, 105);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Jumlah Transaksi:', 25, 90);
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${transactionCount} kali`, 70, 90);
+
+            doc.setTextColor(71, 85, 105);
+            doc.text('Sumber Terbesar:', 25, 98);
+            doc.setTextColor(16, 185, 129);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${topCategory[0]}`, 70, 98);
+            doc.setTextColor(100, 116, 139);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Rp ${formatNumber(topCategory[1])}`, 120, 98);
+
+            // Judul Tabel
+            doc.setFillColor(16, 185, 129);
+            doc.rect(20, 110, 170, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('DAFTAR TRANSAKSI PEMASUKAN', 105, 116, { align: 'center' });
+
+            // Data untuk tabel
+            const tableData = incomes.map(inc => [
+                new Date(inc.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                inc.keterangan.length > 25 ? inc.keterangan.substring(0, 22) + '...' : inc.keterangan,
+                inc.kategori,
+                inc.metode || '-',
+                `Rp ${formatNumber(inc.jumlah)}`
+            ]);
+
+            // AutoTable
+            autoTable(doc, {
+                startY: 118,
+                head: [['Tanggal', 'Keterangan', 'Kategori', 'Metode', 'Jumlah']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [16, 185, 129],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 8,
+                    halign: 'center',
+                    valign: 'middle'
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    textColor: [51, 65, 85],
+                    valign: 'middle'
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251]
+                },
+                columnStyles: {
+                    0: { cellWidth: 30, halign: 'center' },
+                    1: { cellWidth: 50 },
+                    2: { cellWidth: 30, halign: 'center' },
+                    3: { cellWidth: 30, halign: 'center' },
+                    4: { cellWidth: 40, halign: 'right' }
+                },
+                margin: { left: 20, right: 20 },
+                didDrawPage: (data) => {
+                    // Footer
+                    const pageCount = doc.internal.getNumberOfPages();
+                    doc.setFontSize(7);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(
+                        `Halaman ${data.pageNumber} dari ${pageCount}`,
+                        105,
+                        doc.internal.pageSize.height - 10,
+                        { align: 'center' }
+                    );
+                }
+            });
+
+            // Footer tambahan
+            const finalY = doc.lastAutoTable?.finalY || 200;
+            if (finalY + 20 < doc.internal.pageSize.height - 20) {
+                doc.setDrawColor(226, 232, 240);
+                doc.line(20, finalY + 10, 190, finalY + 10);
+
+                doc.setFontSize(7);
+                doc.setTextColor(148, 163, 184);
+                doc.text('Laporan ini dibuat secara otomatis oleh Financial Tracker.', 105, finalY + 18, { align: 'center' });
+            }
+
+            // Simpan PDF
+            const fileName = `Laporan_Pemasukan_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+
             setExportSuccess(true);
             setTimeout(() => setExportSuccess(false), 3000);
 
         } catch (error) {
-            console.error('Export error:', error);
-            alert('Gagal mengekspor data. Silakan coba lagi.');
+            console.error('Export PDF error:', error);
+            alert(`Gagal mengekspor PDF: ${error.message || 'Terjadi kesalahan'}`);
+        } finally {
+            setExporting(false);
         }
     };
 
@@ -128,7 +257,6 @@ export default function Income() {
             return acc;
         }, {});
 
-        // Urutkan kategori berdasarkan nilai terbesar
         const sortedCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]);
 
         return {
@@ -139,14 +267,13 @@ export default function Income() {
         };
     }, [incomes]);
 
-    // LOGIKA GROUPING & SORTING (Kronologis: Terlama ke Terbaru)
+    // LOGIKA GROUPING & SORTING
     const processedData = useMemo(() => {
         let filtered = incomes.filter(t =>
             t.keterangan.toLowerCase().includes(searchTerm.toLowerCase()) ||
             t.kategori.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
-        // Diurutkan dari tanggal terkecil ke terbesar
         filtered.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
         return filtered.reduce((acc, transaction) => {
@@ -222,24 +349,29 @@ export default function Income() {
                             </div>
                         </div>
 
-                        {/* Tombol Export dengan animasi */}
+                        {/* Tombol Export PDF */}
                         <motion.button
-                            onClick={handleExport}
-                            disabled={incomes.length === 0}
+                            onClick={handleExportPDF}
+                            disabled={incomes.length === 0 || exporting}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className={`relative flex items-center gap-2 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-900 font-bold text-xs hover:shadow-xl transition-all shadow-sm ${incomes.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                            className={`relative flex items-center gap-2 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-900 font-bold text-xs hover:shadow-xl transition-all shadow-sm ${(incomes.length === 0 || exporting) ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                         >
-                            {exportSuccess ? (
+                            {exporting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                    <span className="text-emerald-600">Memproses...</span>
+                                </>
+                            ) : exportSuccess ? (
                                 <>
                                     <Check size={14} className="text-emerald-600" />
-                                    <span className="text-emerald-600">Terekspor!</span>
+                                    <span className="text-emerald-600">PDF Tersimpan!</span>
                                 </>
                             ) : (
                                 <>
                                     <Download size={14} />
-                                    <span>Export CSV</span>
+                                    <span>Export PDF</span>
                                 </>
                             )}
                         </motion.button>
@@ -249,7 +381,7 @@ export default function Income() {
                 {/* --- MAIN CONTENT AREA --- */}
                 <div className="flex-1 flex gap-6 overflow-hidden">
 
-                    {/* LEFT PANEL: LISTING (STICKY DATE) */}
+                    {/* LEFT PANEL: LISTING */}
                     <div className="flex-[1.5] flex flex-col bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                         <div className="px-8 pt-8 pb-4 border-b border-slate-50">
                             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Aliran Dana Masuk</h3>

@@ -1,35 +1,223 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { incomeService, expenseService } from "../services/transaction.service";
+import { walletService } from "../services/wallet.service";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, TrendingUp, TrendingDown, Wallet, Plus, Trash2, Check, RefreshCw } from "lucide-react";
 
 export default function PopUp({ isOpen, onClose, onSuccess }) {
-    // Mode 'income' atau 'expense'
     const [type, setType] = useState('income');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [wallets, setWallets] = useState([]);
+    const [loadingWallets, setLoadingWallets] = useState(false);
 
     const [formData, setFormData] = useState({
         amount: '',
-        paymentMethod: '',
         category: 'Salary',
-        description: ''
+        description: '',
+        walletId: ''
     });
+
+    const [showCustomWallet, setShowCustomWallet] = useState(false);
+    const [customWalletName, setCustomWalletName] = useState('');
+    const [creatingWallet, setCreatingWallet] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Fetch wallets ketika popup dibuka
+    const fetchWallets = async () => {
+        try {
+            setLoadingWallets(true);
+            const response = await walletService.getAll();
+            let walletsData = response.data?.wallets || [];
+
+            const cashExists = walletsData.some(w => w.name === 'Cash');
+            if (!cashExists && walletsData.length === 0) {
+                console.log('🏦 Creating default Cash wallet...');
+                const cashWalletData = {
+                    name: 'Cash',
+                    type: 'cash',
+                    category: 'payment',
+                    balance: 0,
+                    isActive: true,
+                    color: 'bg-slate-500'
+                };
+                try {
+                    const newCash = await walletService.create(cashWalletData);
+                    walletsData = [newCash.data?.wallet || newCash];
+                    console.log('✅ Default Cash wallet created');
+                } catch (err) {
+                    console.error('Error creating Cash wallet:', err);
+                }
+            } else if (!cashExists && walletsData.length > 0) {
+                console.log('🏦 Creating Cash wallet...');
+                const cashWalletData = {
+                    name: 'Cash',
+                    type: 'cash',
+                    category: 'payment',
+                    balance: 0,
+                    isActive: true,
+                    color: 'bg-slate-500'
+                };
+                try {
+                    const newCash = await walletService.create(cashWalletData);
+                    walletsData = [newCash.data?.wallet || newCash, ...walletsData];
+                    console.log('✅ Cash wallet created');
+                } catch (err) {
+                    console.error('Error creating Cash wallet:', err);
+                }
+            }
+
+            const sortedWallets = [...walletsData].sort((a, b) => {
+                if (a.name === 'Cash') return -1;
+                if (b.name === 'Cash') return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            setWallets(sortedWallets);
+            return sortedWallets;
+        } catch (error) {
+            console.error('Error fetching wallets:', error);
+            return [];
+        } finally {
+            setLoadingWallets(false);
+        }
+    };
+
+    const refreshWallets = async () => {
+        setRefreshing(true);
+        const newWallets = await fetchWallets();
+        setRefreshing(false);
+        return newWallets;
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchWallets().then(walletsData => {
+                if (walletsData.length > 0 && !formData.walletId) {
+                    const cashWallet = walletsData.find(w => w.name === 'Cash');
+                    const defaultWalletId = cashWallet ? cashWallet.id : walletsData[0].id;
+                    setFormData(prev => ({
+                        ...prev,
+                        walletId: defaultWalletId
+                    }));
+                }
+            });
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    // Kategori berubah sesuai tipe transaksi
+    const formatNumber = (value) => {
+        if (!value) return '';
+        const numberString = value.toString().replace(/\D/g, '');
+        if (!numberString) return '';
+        return new Intl.NumberFormat('id-ID').format(parseInt(numberString, 10));
+    };
+
+    const handleAmountChange = (e) => {
+        const rawValue = e.target.value;
+        const numericValue = rawValue.replace(/\./g, '');
+        setFormData({ ...formData, amount: formatNumber(numericValue) });
+    };
+
+    const getNumericAmount = () => {
+        if (!formData.amount) return 0;
+        return parseFloat(formData.amount.replace(/\./g, '')) || 0;
+    };
+
+    const handleClose = () => {
+        setFormData({
+            amount: '',
+            category: type === 'income' ? 'Salary' : 'Food',
+            description: '',
+            walletId: wallets.find(w => w.name === 'Cash')?.id || wallets[0]?.id || ''
+        });
+        setError('');
+        setShowCustomWallet(false);
+        setCustomWalletName('');
+        onClose();
+    };
+
+    const createNewWallet = async (walletName) => {
+        try {
+            setCreatingWallet(true);
+            const walletData = {
+                name: walletName,
+                type: walletName === 'Cash' ? 'cash' : 'bank',
+                category: 'payment',
+                balance: 0,
+                isActive: true,
+                color: walletName === 'Cash' ? 'bg-slate-500' : 'bg-blue-500'
+            };
+            const response = await walletService.create(walletData);
+            const newWallet = response.data?.wallet || response;
+            const updatedWallets = await refreshWallets();
+            const createdWallet = updatedWallets.find(w => w.name === walletName);
+            if (createdWallet) {
+                setFormData(prev => ({ ...prev, walletId: createdWallet.id }));
+            }
+            return newWallet;
+        } catch (error) {
+            console.error('Error creating wallet:', error);
+            setError('Gagal membuat wallet baru');
+            return null;
+        } finally {
+            setCreatingWallet(false);
+        }
+    };
+
+    const handleAddCustomWallet = async () => {
+        if (!customWalletName.trim()) {
+            setError('Nama wallet tidak boleh kosong');
+            return;
+        }
+        const newWalletName = customWalletName.trim();
+        const existingWallet = wallets.find(w => w.name === newWalletName);
+        if (existingWallet) {
+            setError(`Wallet "${newWalletName}" sudah ada, silakan pilih dari daftar`);
+            return;
+        }
+        const newWallet = await createNewWallet(newWalletName);
+        if (newWallet) {
+            setCustomWalletName('');
+            setShowCustomWallet(false);
+            setError('');
+            window.dispatchEvent(new Event('wallet-added'));
+        }
+    };
+
+    const handleDeleteWallet = async (walletId, walletName) => {
+        if (walletName === 'Cash') {
+            setError('Tidak dapat menghapus wallet Cash');
+            return;
+        }
+        if (window.confirm(`Hapus wallet "${walletName}"?`)) {
+            try {
+                await walletService.delete(walletId);
+                const updatedWallets = await refreshWallets();
+                if (formData.walletId === walletId && updatedWallets.length > 0) {
+                    const cashWallet = updatedWallets.find(w => w.name === 'Cash');
+                    setFormData(prev => ({
+                        ...prev,
+                        walletId: cashWallet ? cashWallet.id : updatedWallets[0].id
+                    }));
+                }
+                window.dispatchEvent(new Event('wallet-added'));
+                setError('');
+            } catch (error) {
+                console.error('Error deleting wallet:', error);
+                setError('Gagal menghapus wallet');
+            }
+        }
+    };
+
+    const handleSelectWallet = (walletId, walletName) => {
+        setFormData(prev => ({ ...prev, walletId: walletId }));
+    };
+
     const categories = type === 'income'
         ? ['Salary', 'Freelance', 'Investment', 'Gift', 'Other']
         : ['Food', 'Transport', 'Bills', 'Shopping', 'Health', 'Other'];
-
-    // Payment methods
-    const paymentMethods = [
-        'Cash',
-        'Bank Transfer',
-        'E-Wallet',
-        'Credit Card',
-        'Debit Card',
-        'Other'
-    ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -37,229 +225,334 @@ export default function PopUp({ isOpen, onClose, onSuccess }) {
         setError('');
 
         try {
-            // Validasi
-            if (!formData.amount || formData.amount <= 0) {
-                throw new Error('Amount must be greater than 0');
-            }
-            if (!formData.paymentMethod) {
-                throw new Error('Please select payment method');
-            }
+            const numericAmount = getNumericAmount();
+            if (!numericAmount || numericAmount <= 0) throw new Error('Nominal harus lebih dari 0');
+            if (!formData.walletId) throw new Error('Pilih wallet');
 
-            // Siapkan data untuk dikirim
+            const selectedWallet = wallets.find(w => w.id === formData.walletId);
             const dataToSend = {
-                amount: parseFloat(formData.amount),
-                paymentMethod: formData.paymentMethod,
+                amount: numericAmount,
+                paymentMethod: selectedWallet?.name || 'Cash',
                 category: formData.category,
-                description: formData.description || ''
+                description: formData.description || '',
+                walletId: formData.walletId
             };
 
-            let response;
             if (type === 'income') {
-                response = await incomeService.create(dataToSend);
+                await incomeService.create(dataToSend);
             } else {
-                response = await expenseService.create(dataToSend);
+                await expenseService.create(dataToSend);
             }
 
-            console.log(`${type} created:`, response);
-
-            // Reset form
             setFormData({
                 amount: '',
-                paymentMethod: '',
                 category: type === 'income' ? 'Salary' : 'Food',
-                description: ''
+                description: '',
+                walletId: wallets.find(w => w.name === 'Cash')?.id || wallets[0]?.id || ''
             });
 
-            // Panggil callback onSuccess
-            if (onSuccess) {
-                onSuccess(type);
-            }
+            window.dispatchEvent(new Event('transaction-added'));
+            window.dispatchEvent(new Event('wallet-added'));
 
-            // Close popup
+            if (onSuccess) onSuccess(type);
             onClose();
         } catch (err) {
-            console.error('Error:', err);
-            setError(err.message || 'Failed to save transaction');
+            console.error('❌ Error:', err);
+            setError(err.message || 'Gagal menyimpan transaksi');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Overlay dengan blur */}
-            <div
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity"
-                onClick={onClose}
-            ></div>
-
-            {/* MODAL - Ukuran seperti awal */}
-            <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
-                {/* Toggle Switch Pemasukan / Pengeluaran - Ukuran proporsional */}
-                <div className="flex bg-slate-100 p-1 rounded-2xl mb-6 relative">
-                    <div
-                        className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl transition-all duration-500 ease-out shadow-sm ${type === 'income' ? 'left-1 bg-emerald-500' : 'left-[calc(50%-2px)] bg-rose-500'
-                            }`}
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
+                        onClick={handleClose}
                     />
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setType('income');
-                            setFormData({ ...formData, category: 'Salary', paymentMethod: '' });
-                            setError('');
-                        }}
-                        className={`relative z-10 flex-1 py-2.5 text-sm font-black transition-colors duration-300 ${type === 'income' ? 'text-white' : 'text-slate-400'
-                            }`}
-                    >
-                        Income
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setType('expense');
-                            setFormData({ ...formData, category: 'Food', paymentMethod: '' });
-                            setError('');
-                        }}
-                        className={`relative z-10 flex-1 py-2.5 text-sm font-black transition-colors duration-300 ${type === 'expense' ? 'text-white' : 'text-slate-400'
-                            }`}
-                    >
-                        Expense
-                    </button>
-                </div>
 
-                {/* Header - Ukuran compact */}
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                            Tambah {type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
-                        </h2>
-                        <p className="text-slate-400 text-xs font-medium">Lengkapi detail transaksi Anda</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-rose-500 rounded-xl transition-all hover:rotate-90"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium">
-                        {error}
-                    </div>
-                )}
-
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    {/* Input Nominal */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 px-1">
-                            Nominal Saldo
-                        </label>
-                        <div className="relative group">
-                            <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-black text-sm transition-colors ${type === 'income' ? 'text-emerald-500' : 'text-rose-500'
-                                }`}>
-                                Rp
-                            </span>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                required
-                                value={formData.amount}
-                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl text-slate-800 text-base font-black focus:bg-white outline-none transition-all focus:ring-0"
-                                disabled={loading}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Input Payment Method */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 px-1">
-                            Metode Pembayaran
-                        </label>
-                        <select
-                            required
-                            value={formData.paymentMethod}
-                            onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                            className="w-full px-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl text-slate-800 text-sm font-bold focus:bg-white outline-none appearance-none cursor-pointer hover:bg-slate-100 transition-all"
-                            disabled={loading}
+                    <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 400 }}
+                            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
                         >
-                            <option value="">Pilih Bank / Dompet</option>
-                            {paymentMethods.map(method => (
-                                <option key={method} value={method}>{method}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Kategori Dinamis */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 px-1">
-                            Kategori
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {categories.map((cat) => (
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
+                                        {type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-slate-800">
+                                            {type === 'income' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran'}
+                                        </h2>
+                                        <p className="text-xs text-slate-400">Isi detail transaksi Anda</p>
+                                    </div>
+                                </div>
                                 <button
-                                    key={cat}
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, category: cat })}
-                                    disabled={loading}
-                                    className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all transform active:scale-90 ${formData.category === cat
-                                            ? (type === 'income'
-                                                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
-                                                : 'bg-rose-500 text-white shadow-sm shadow-rose-200')
-                                            : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
-                                        }`}
+                                    onClick={handleClose}
+                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                                 >
-                                    {cat}
+                                    <X size={18} />
                                 </button>
-                            ))}
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Description (optional) */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 px-1">
-                            Catatan (Opsional)
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Tambah catatan..."
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl text-slate-800 text-sm font-medium focus:bg-white outline-none transition-all"
-                            disabled={loading}
-                        />
-                    </div>
+                            {/* Content - ukuran sedang */}
+                            <div className="p-5">
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-2"
+                                    >
+                                        <span>⚠️</span>
+                                        {error}
+                                    </motion.div>
+                                )}
 
-                    {/* Tombol Submit */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full text-white font-black py-3.5 rounded-2xl shadow-lg transition-all transform active:scale-[0.97] mt-2 flex items-center justify-center gap-2 text-sm ${type === 'income'
-                                ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100'
-                                : 'bg-rose-500 hover:bg-rose-600 shadow-rose-100'
-                            } ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                        {loading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                <span className="text-sm">Menyimpan...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span className="text-sm">Simpan {type === 'income' ? 'Pendapatan' : 'Pengeluaran'}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </>
-                        )}
-                    </button>
-                </form>
-            </div>
-        </div>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    {/* Type Toggle */}
+                                    <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setType('income');
+                                                const cashWallet = wallets.find(w => w.name === 'Cash');
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    category: 'Salary',
+                                                    amount: prev.amount,
+                                                    walletId: cashWallet?.id || wallets[0]?.id || ''
+                                                }));
+                                                setError('');
+                                            }}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`}
+                                        >
+                                            Pemasukan
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setType('expense');
+                                                const cashWallet = wallets.find(w => w.name === 'Cash');
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    category: 'Food',
+                                                    amount: prev.amount,
+                                                    walletId: cashWallet?.id || wallets[0]?.id || ''
+                                                }));
+                                                setError('');
+                                            }}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${type === 'expense' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500'}`}
+                                        >
+                                            Pengeluaran
+                                        </button>
+                                    </div>
+
+                                    {/* Amount */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Nominal</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Rp</span>
+                                            <input
+                                                type="text"
+                                                placeholder="0"
+                                                value={formData.amount}
+                                                onChange={handleAmountChange}
+                                                className="w-full pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-base font-medium focus:border-emerald-300 focus:bg-white outline-none transition-all"
+                                                disabled={loading}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Wallet Selection */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className="block text-xs font-medium text-slate-500">
+                                                {type === 'income' ? 'Wallet Tujuan' : 'Wallet Sumber'}
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={refreshWallets}
+                                                disabled={refreshing}
+                                                className="p-1 text-slate-400 hover:text-emerald-500 transition-all"
+                                            >
+                                                <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+                                            </button>
+                                        </div>
+                                        {loadingWallets || refreshing ? (
+                                            <div className="flex justify-center py-3">
+                                                <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                            </div>
+                                        ) : wallets.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {wallets.map((wallet) => {
+                                                    const isSelected = formData.walletId === wallet.id;
+                                                    return (
+                                                        <div key={wallet.id} className="relative group">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSelectWallet(wallet.id, wallet.name)}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${isSelected
+                                                                    ? (type === 'income' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')
+                                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                                    }`}
+                                                            >
+                                                                <Wallet size={12} />
+                                                                {wallet.name}
+                                                                {isSelected && <Check size={10} className="ml-1" />}
+                                                            </button>
+                                                            {wallet.name !== 'Cash' && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteWallet(wallet.id, wallet.name)}
+                                                                    className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 p-0.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                                                                >
+                                                                    <Trash2 size={10} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-3 text-slate-400 text-sm">
+                                                Belum ada wallet. Tambah wallet baru di bawah
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Tombol Tambah Wallet Baru */}
+                                    {!showCustomWallet ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCustomWallet(true)}
+                                            disabled={creatingWallet}
+                                            className="w-full py-2.5 border border-dashed border-emerald-300 rounded-xl text-emerald-600 text-sm font-medium hover:bg-emerald-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            <Plus size={14} />
+                                            Tambah Wallet Baru
+                                        </button>
+                                    ) : (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="space-y-2"
+                                        >
+                                            <input
+                                                type="text"
+                                                placeholder="Contoh: Bank BRI, Bank BNI, GoPay, OVO"
+                                                value={customWalletName}
+                                                onChange={(e) => setCustomWalletName(e.target.value)}
+                                                className="w-full px-3 py-2.5 bg-slate-50 border border-emerald-200 rounded-xl text-sm outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                                                autoFocus
+                                                disabled={creatingWallet}
+                                            />
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddCustomWallet}
+                                                    disabled={creatingWallet}
+                                                    className="flex-1 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                >
+                                                    {creatingWallet ? (
+                                                        <>
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            <span>Membuat...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Plus size={14} />
+                                                            <span>Buat Wallet</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowCustomWallet(false);
+                                                        setCustomWalletName('');
+                                                        setError('');
+                                                    }}
+                                                    className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition-all"
+                                                    disabled={creatingWallet}
+                                                >
+                                                    Batal
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Category */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Kategori</label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {categories.map((cat) => (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, category: cat })}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${formData.category === cat
+                                                        ? (type === 'income' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')
+                                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                                        }`}
+                                                >
+                                                    {cat}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Catatan (Opsional)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Tambah catatan..."
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-300 focus:bg-white transition-all"
+                                            disabled={loading}
+                                        />
+                                    </div>
+
+                                    {/* Submit Button */}
+                                    <button
+                                        type="submit"
+                                        disabled={loading || !formData.walletId}
+                                        className={`w-full py-3 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 text-sm ${type === 'income'
+                                            ? 'bg-emerald-500 hover:bg-emerald-600'
+                                            : 'bg-rose-500 hover:bg-rose-600'
+                                            } ${(loading || !formData.walletId) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                <span>Menyimpan...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check size={16} />
+                                                <span>Simpan {type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            </div>
+                        </motion.div>
+                    </div>
+                </>
+            )}
+        </AnimatePresence>
     );
 }

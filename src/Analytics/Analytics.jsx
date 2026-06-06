@@ -8,10 +8,10 @@ import {
     TrendingUp,
     ArrowUpRight,
     ArrowDownRight,
-    Target,
     PieChart as PieIcon,
     Activity,
-    Calendar
+    Calendar,
+    Download
 } from 'lucide-react';
 import Sidebar from '../Sidebar/sidebar';
 import { incomeService, expenseService } from '../services/transaction.service';
@@ -140,24 +140,78 @@ export default function AnalyticsPage() {
             .filter(t => t.tipe === 'expense')
             .reduce((a, b) => a + b.jumlah, 0);
 
-        // 🔥 Savings Rate
-        const savings = totalIncome - totalExpense;
-        const savingsRate = totalIncome > 0 ? (savings / totalIncome * 100) : 0;
-        const formattedSavingsRate = savingsRate.toFixed(1);
-
         const expenseCount = monthTransactions.filter(t => t.tipe === 'expense').length;
+
+        // Data untuk CSV (semua transaksi bulan ini)
+        const csvData = monthTransactions.map(t => ({
+            Tanggal: new Date(t.tanggal).toLocaleDateString('id-ID'),
+            Tipe: t.tipe === 'income' ? 'Pemasukan' : 'Pengeluaran',
+            Kategori: t.kategori,
+            Deskripsi: t.keterangan,
+            Jumlah: t.jumlah,
+            Metode: t.metode || '-'
+        }));
 
         return {
             areaChartData,
             pieChartData,
             totalIncome,
             totalExpense,
-            savingsRate: formattedSavingsRate,
             expenseCount,
             selectedMonthName: monthNames[selectedMonth],
-            selectedYear
+            selectedYear,
+            csvData
         };
     }, [transactions, selectedMonth, selectedYear, refreshKey]);
+
+    // 🔥 FUNGSI DOWNLOAD CSV
+    const downloadCSV = () => {
+        if (processedData.csvData.length === 0) {
+            alert('Tidak ada data untuk bulan ini');
+            return;
+        }
+
+        // Header CSV
+        const headers = ['Tanggal', 'Tipe', 'Kategori', 'Deskripsi', 'Jumlah', 'Metode'];
+
+        // Convert data ke format CSV
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+
+        for (const row of processedData.csvData) {
+            const values = headers.map(header => {
+                let value = row[header];
+                // Format jumlah ke angka tanpa desimal
+                if (header === 'Jumlah') {
+                    value = value.toString();
+                }
+                // Escape quotes dan wrap dengan quotes jika ada koma
+                if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                    value = `"${value.replace(/"/g, '""')}"`;
+                }
+                return value;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        // Tambahkan summary di akhir
+        csvRows.push('');
+        csvRows.push('SUMMARY,,' + `Periode: ${processedData.selectedMonthName} ${processedData.selectedYear}`);
+        csvRows.push(`Total Pemasukan,,${processedData.totalIncome}`);
+        csvRows.push(`Total Pengeluaran,,${processedData.totalExpense}`);
+        csvRows.push(`Selisih,,${processedData.totalIncome - processedData.totalExpense}`);
+
+        // Buat file dan download
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `analytics_${processedData.selectedMonthName}_${processedData.selectedYear}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
     // Handle month change
     const handlePrevMonth = () => {
@@ -176,15 +230,6 @@ export default function AnalyticsPage() {
         } else {
             setSelectedMonth(selectedMonth + 1);
         }
-    };
-
-    // 🔥 Fungsi untuk mendapatkan status savings rate dalam bahasa Inggris
-    const getSavingsStatus = (rate) => {
-        if (rate > 30) return { text: 'Excellent', color: 'text-emerald-600', bg: 'bg-emerald-50' };
-        if (rate > 20) return { text: 'Good', color: 'text-blue-600', bg: 'bg-blue-50' };
-        if (rate > 10) return { text: 'Fair', color: 'text-yellow-600', bg: 'bg-yellow-50' };
-        if (rate > 0) return { text: 'Poor', color: 'text-orange-600', bg: 'bg-orange-50' };
-        return { text: 'Deficit', color: 'text-rose-600', bg: 'bg-rose-50' };
     };
 
     // Loading state
@@ -207,46 +252,55 @@ export default function AnalyticsPage() {
         );
     }
 
-    const savingsStatus = getSavingsStatus(parseFloat(processedData.savingsRate));
-
     return (
         <div className="flex h-screen bg-[#F8FAFC] font-sans">
             <Sidebar />
 
             <div className="flex-1 flex flex-col p-6 md:p-10 overflow-y-auto">
-                {/* --- HEADER with Month Selector --- */}
+                {/* --- HEADER with Month Selector and Download Button --- */}
                 <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 tracking-tight">Analytics Center</h1>
                         <p className="text-slate-500 mt-2">Analisis keuangan Anda secara mendalam</p>
                     </div>
 
-                    {/* Month Selector */}
-                    <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200/50 shadow-sm">
-                        <button
-                            onClick={handlePrevMonth}
-                            className="p-2 hover:bg-slate-50 rounded-xl transition-colors"
-                        >
-                            <Calendar size={18} className="text-slate-500" />
-                        </button>
+                    <div className="flex items-center gap-3">
+                        {/* Month Selector */}
+                        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200/50 shadow-sm">
+                            <button
+                                onClick={handlePrevMonth}
+                                className="p-2 hover:bg-slate-50 rounded-xl transition-colors"
+                            >
+                                <Calendar size={18} className="text-slate-500" />
+                            </button>
 
-                        <div className="flex items-center gap-2 px-3">
-                            <span className="font-bold text-slate-700">
-                                {processedData.selectedMonthName} {processedData.selectedYear}
-                            </span>
+                            <div className="flex items-center gap-2 px-3">
+                                <span className="font-bold text-slate-700">
+                                    {processedData.selectedMonthName} {processedData.selectedYear}
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={handleNextMonth}
+                                className="p-2 hover:bg-slate-50 rounded-xl transition-colors"
+                            >
+                                <Calendar size={18} className="text-slate-500" />
+                            </button>
                         </div>
 
+                        {/* 🔥 DOWNLOAD CSV BUTTON */}
                         <button
-                            onClick={handleNextMonth}
-                            className="p-2 hover:bg-slate-50 rounded-xl transition-colors"
+                            onClick={downloadCSV}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-2xl font-bold shadow-sm hover:bg-emerald-700 transition-all active:scale-95"
                         >
-                            <Calendar size={18} className="text-slate-500" />
+                            <Download size={16} />
+                            <span className="text-sm">Export CSV</span>
                         </button>
                     </div>
                 </header>
 
                 {/* --- INSIGHT CARDS --- */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     {/* Total Income Card */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -279,22 +333,6 @@ export default function AnalyticsPage() {
                         <h3 className="text-2xl font-black text-slate-900">{formatIDR(processedData.totalExpense)}</h3>
                         <div className="mt-4 flex items-center gap-2 text-rose-500 font-bold text-xs bg-rose-50 w-fit px-3 py-1 rounded-full">
                             <ArrowDownRight size={14} /> {processedData.expenseCount} Transactions
-                        </div>
-                    </motion.div>
-
-                    {/* 🔥 Savings Rate Card - Tanpa Tabungan, Status Bahasa Inggris */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="bg-slate-900 p-6 rounded-[2.5rem] shadow-2xl text-white"
-                    >
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                            Savings Rate • {processedData.selectedMonthName}
-                        </p>
-                        <h3 className="text-2xl font-black">{processedData.savingsRate}%</h3>
-                        <div className={`mt-4 flex items-center gap-2 font-bold text-xs ${savingsStatus.color} ${savingsStatus.bg} w-fit px-3 py-1 rounded-full`}>
-                            <Target size={14} /> {savingsStatus.text}
                         </div>
                     </motion.div>
                 </div>

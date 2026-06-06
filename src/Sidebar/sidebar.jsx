@@ -77,12 +77,6 @@ export default function Sidebar() {
                 </nav>
 
                 <div className="mt-auto space-y-2">
-                    <button className="w-full flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-slate-50 rounded-2xl transition-all font-bold text-[15px]">
-                        <HelpCircle size={22} />
-                        <span>Help</span>
-                    </button>
-
-                    {/* 🔥 TOMBOL LOGOUT DENGAN FUNGSI */}
                     <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all font-bold text-[15px] group"

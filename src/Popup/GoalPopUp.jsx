@@ -1,289 +1,525 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    X, Plus, Minus, CheckCircle, AlertCircle, Target
+    X, Target, CheckCircle, AlertCircle,
+    Plus, Minus, Laptop, Plane, Shield, Home, Car, Book, Heart,
+    GraduationCap, Gamepad, Dumbbell, Music,
+    Rocket, Sparkles, Zap
 } from 'lucide-react';
 import { goalService } from '../services/goal.service';
 
-export default function ManageGoalModal({ isOpen, onClose, goal, onSuccess }) {
+// Icons dengan kategori
+const ICONS = [
+    { name: 'Laptop', component: Laptop, label: '💻 Laptop' },
+    { name: 'Plane', component: Plane, label: '✈️ Plane' },
+    { name: 'Shield', component: Shield, label: '🛡️ Shield' },
+    { name: 'Home', component: Home, label: '🏠 Home' },
+    { name: 'Car', component: Car, label: '🚗 Car' },
+    { name: 'Book', component: Book, label: '📚 Book' },
+    { name: 'Heart', component: Heart, label: '❤️ Heart' },
+    { name: 'GraduationCap', component: GraduationCap, label: '🎓 Graduation' },
+    { name: 'Gamepad', component: Gamepad, label: '🎮 Game' },
+    { name: 'Dumbbell', component: Dumbbell, label: '💪 Fitness' },
+    { name: 'Music', component: Music, label: '🎵 Music' },
+    { name: 'Rocket', component: Rocket, label: '🚀 Rocket' },
+    { name: 'Sparkles', component: Sparkles, label: '✨ Sparkles' },
+    { name: 'Zap', component: Zap, label: '⚡ Zap' }
+];
+
+// 🔥 SOLID COLORS untuk backend (sesuai enum di model)
+const SOLID_COLORS = [
+    { value: 'bg-blue-600', label: 'Blue', class: 'bg-blue-600', gradient: 'from-blue-500 to-blue-600' },
+    { value: 'bg-rose-500', label: 'Rose', class: 'bg-rose-500', gradient: 'from-rose-500 to-rose-600' },
+    { value: 'bg-emerald-500', label: 'Emerald', class: 'bg-emerald-500', gradient: 'from-emerald-500 to-emerald-600' },
+    { value: 'bg-purple-600', label: 'Purple', class: 'bg-purple-600', gradient: 'from-purple-500 to-purple-600' },
+    { value: 'bg-amber-500', label: 'Amber', class: 'bg-amber-500', gradient: 'from-amber-500 to-amber-600' },
+    { value: 'bg-indigo-600', label: 'Indigo', class: 'bg-indigo-600', gradient: 'from-indigo-500 to-indigo-600' }
+];
+
+// Mapping solid color ke gradient untuk preview
+const getGradientFromSolid = (solidColor) => {
+    const color = SOLID_COLORS.find(c => c.value === solidColor);
+    return color ? color.gradient : 'from-indigo-500 to-indigo-600';
+};
+
+const CATEGORIES = [
+    'Tech', 'Travel', 'Finance', 'Education', 'Health', 'Property', 'Vehicle', 'Entertainment', 'Other'
+];
+
+export default function GoalPopUp({ isOpen, onClose, goal, onSuccess }) {
+    const isManageMode = goal !== null && goal !== undefined;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
-    const [amount, setAmount] = useState('');
     const [action, setAction] = useState('add');
+    const [formData, setFormData] = useState({
+        title: '', category: 'Tech', targetAmount: '', deadline: '', color: 'bg-blue-600', icon: 'Laptop'
+    });
+    const [amount, setAmount] = useState('');
 
-    // 🔥 RESET TOTAL setiap kali modal dibuka atau goal berubah
+    const formatIDR = (val) => {
+        if (val === undefined || val === null) return 'Rp 0';
+        return `Rp ${val.toLocaleString('id-ID')}`;
+    };
+
+    const handleAmountChange = (e) => {
+        const digitsOnly = e.target.value.replace(/[^\d]/g, '');
+        if (!digitsOnly) { setAmount(''); return; }
+        setAmount(parseInt(digitsOnly, 10).toLocaleString('id-ID'));
+    };
+
+    const getNumericAmount = () => {
+        if (!amount) return 0;
+        return parseInt(amount.replace(/[^\d]/g, ''), 10) || 0;
+    };
+
+    const handleTargetChange = (e) => {
+        const digitsOnly = e.target.value.replace(/[^\d]/g, '');
+        if (!digitsOnly) { setFormData({ ...formData, targetAmount: '' }); return; }
+        setFormData({ ...formData, targetAmount: parseInt(digitsOnly, 10).toLocaleString('id-ID') });
+    };
+
+    const getNumericTarget = () => {
+        if (!formData.targetAmount) return 0;
+        return parseInt(formData.targetAmount.replace(/[^\d]/g, ''), 10) || 0;
+    };
+
     useEffect(() => {
         if (isOpen) {
-            console.log('Modal opened with goal:', goal);
-            setAmount('');
+            if (isManageMode) {
+                setAmount('');
+                setAction('add');
+            } else {
+                setFormData({
+                    title: '', category: 'Tech', targetAmount: '', deadline: '', color: 'bg-blue-600', icon: 'Laptop'
+                });
+            }
             setError('');
             setSuccess(false);
             setLoading(false);
-            setAction('add');
         }
     }, [isOpen, goal]);
 
-    // Kalau modal tidak open atau goal tidak ada, jangan render
-    if (!isOpen || !goal) return null;
+    if (!isOpen) return null;
 
-    const formatIDR = (val) => new Intl.NumberFormat('id-ID', {
-        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-    }).format(val);
-
-    const progress = (goal.currentAmount / goal.targetAmount) * 100;
-    const remaining = goal.targetAmount - goal.currentAmount;
-
-    const handleSubmit = async (e) => {
+    const handleCreateSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setSuccess(false);
-
         try {
-            const contributionAmount = parseFloat(amount);
+            if (!formData.title) throw new Error('Title is required');
+            const numericTarget = getNumericTarget();
+            if (!numericTarget || numericTarget <= 0) throw new Error('Target amount must be greater than 0');
+            if (!formData.deadline) throw new Error('Deadline is required');
 
-            if (!amount || contributionAmount <= 0) {
-                throw new Error('Please enter a valid amount');
-            }
+            const deadline = new Date(formData.deadline);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            if (deadline < today) throw new Error('Deadline cannot be in the past');
 
-            if (action === 'add') {
-                if (goal.currentAmount + contributionAmount > goal.targetAmount) {
-                    throw new Error('Amount would exceed target');
-                }
-                await goalService.addContribution(goal.id, contributionAmount);
-            } else {
-                if (goal.currentAmount - contributionAmount < 0) {
-                    throw new Error('Insufficient balance in goal');
-                }
-                await goalService.addContribution(goal.id, -contributionAmount);
-            }
-
-            // 🔥 Tampilkan success message
+            // 🔥 Kirim solid color, bukan gradient
+            await goalService.create({
+                title: formData.title,
+                category: formData.category,
+                targetAmount: numericTarget,
+                currentAmount: 0,
+                deadline: formData.deadline,
+                color: formData.color, // ini solid color: bg-blue-600, dll
+                icon: formData.icon
+            });
             setSuccess(true);
-            setLoading(false);
-
-            // 🔥 Reset form setelah sukses
-            setAmount('');
-
-            // 🔥 Panggil onSuccess untuk refresh data di halaman utama
-            if (onSuccess) {
-                onSuccess();
-            }
-
-            // 🔥 Tunggu 1.5 detik lalu tutup modal
-            setTimeout(() => {
-                setSuccess(false);
-                onClose();
-            }, 1500);
-
+            setTimeout(() => { if (onSuccess) onSuccess(); onClose(); }, 1500);
         } catch (err) {
             setError(err.message);
+            console.error('Create error:', err);
+        } finally {
             setLoading(false);
         }
     };
 
-    const handleQuickAmount = (quickAmount) => {
-        setAmount(quickAmount.toString());
-    };
-
-    const handleClose = () => {
-        // 🔥 Reset semua state sebelum tutup
-        setAmount('');
+    const handleManageSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
         setError('');
         setSuccess(false);
-        setLoading(false);
-        onClose();
+        try {
+            const numericAmount = getNumericAmount();
+            if (!numericAmount || numericAmount <= 0) throw new Error('Masukkan nominal yang valid');
+            if (action === 'add') {
+                if (goal.currentAmount + numericAmount > goal.targetAmount) throw new Error('Amount would exceed target');
+                await goalService.addContribution(goal.id, numericAmount);
+            } else {
+                if (goal.currentAmount - numericAmount < 0) throw new Error('Insufficient balance in goal');
+                await goalService.addContribution(goal.id, -numericAmount);
+            }
+            setSuccess(true);
+            setAmount('');
+            if (onSuccess) await onSuccess();
+            setTimeout(() => { setSuccess(false); onClose(); }, 1000);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const progress = isManageMode ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+    const remaining = isManageMode ? goal.targetAmount - goal.currentAmount : 0;
+
+    const selectedIcon = ICONS.find(i => i.name === formData.icon);
+    const IconComponent = selectedIcon?.component || Target;
 
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 z-[100]"
-                        onClick={handleClose}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+                        onClick={onClose}
                     />
-
-                    {/* Modal */}
                     <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl pointer-events-auto overflow-hidden"
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 400 }}
+                            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl pointer-events-auto overflow-hidden max-h-[85vh] flex flex-col"
                         >
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                        <Target size={20} className="text-indigo-600" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-lg font-bold text-slate-800">Manage Goal</h2>
-                                        <p className="text-xs text-slate-500">{goal.title}</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleClose}
-                                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                                >
-                                    <X size={18} className="text-slate-400" />
-                                </button>
-                            </div>
+                            {/* Header dengan gradient - fixed */}
+                            <div className={`relative overflow-hidden bg-gradient-to-r ${isManageMode ? 'from-indigo-500 to-indigo-600' : 'from-blue-500 to-blue-600'} p-4 flex-shrink-0`}>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
 
-                            {/* Goal Info */}
-                            <div className="p-5 bg-slate-50 border-b border-slate-100">
-                                <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs text-slate-500">Progress</span>
-                                    <span className="text-xs font-bold text-indigo-600">{progress.toFixed(1)}%</span>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="h-2 w-full bg-slate-200 rounded-full mb-4">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${progress}%` }}
-                                        className={`h-full rounded-full ${goal.color || 'bg-indigo-600'}`}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Current</p>
-                                        <p className="text-lg font-bold text-slate-800">{formatIDR(goal.currentAmount)}</p>
+                                <div className="relative flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                                            <Target size={20} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-base font-bold text-white">
+                                                {isManageMode ? 'Kelola Goal' : 'Buat Goal Baru'}
+                                            </h2>
+                                            <p className="text-white/80 text-[11px]">
+                                                {isManageMode ? goal?.title : 'Tentukan target keuangan Anda'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Target</p>
-                                        <p className="text-lg font-bold text-slate-800">{formatIDR(goal.targetAmount)}</p>
-                                    </div>
-                                </div>
-                                <div className="mt-3 pt-3 border-t border-slate-200">
-                                    <p className="text-xs text-slate-500 mb-1">Remaining</p>
-                                    <p className="text-lg font-bold text-emerald-600">{formatIDR(remaining)}</p>
+                                    <button
+                                        onClick={onClose}
+                                        className="p-1.5 bg-white/20 hover:bg-white/30 rounded-xl transition-all text-white"
+                                    >
+                                        <X size={16} />
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Messages */}
-                            <div className="px-5 pt-4">
-                                <AnimatePresence mode="wait">
+                            {/* Content - scrollable */}
+                            <div className="p-4 overflow-y-auto flex-1">
+                                {/* Messages */}
+                                <AnimatePresence>
                                     {success && (
                                         <motion.div
-                                            key="success"
-                                            initial={{ opacity: 0, y: -5 }}
+                                            initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0 }}
-                                            className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm flex items-center gap-2"
+                                            className="mb-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs flex items-center gap-2"
                                         >
-                                            <CheckCircle size={16} />
-                                            <span>Goal updated successfully!</span>
+                                            <CheckCircle size={14} />
+                                            <span>{isManageMode ? 'Goal berhasil diupdate!' : 'Goal berhasil dibuat!'}</span>
                                         </motion.div>
                                     )}
                                     {error && (
                                         <motion.div
-                                            key="error"
-                                            initial={{ opacity: 0, y: -5 }}
+                                            initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0 }}
-                                            className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 text-sm flex items-center gap-2"
+                                            className="mb-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs"
                                         >
-                                            <AlertCircle size={16} />
-                                            <span>{error}</span>
+                                            {error}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
-                            </div>
 
-                            {/* Action Buttons */}
-                            <div className="px-5 pt-2">
-                                <div className="flex gap-2 mb-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAction('add')}
-                                        disabled={loading || success}
-                                        className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${action === 'add'
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                            } ${(loading || success) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    >
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Plus size={16} />
-                                            <span>Add</span>
+                                {isManageMode ? (
+                                    // MANAGE MODE
+                                    <div className="space-y-3">
+                                        {/* Goal Info Card - pakai solid color dari goal */}
+                                        <div className={`p-3 rounded-xl ${goal.color || 'bg-indigo-600'} text-white`}>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[10px] font-medium opacity-80">Progress</span>
+                                                <span className="text-xs font-bold">{progress.toFixed(1)}%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-white/30 rounded-full mb-3">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${Math.min(progress, 100)}%` }}
+                                                    transition={{ duration: 0.8 }}
+                                                    className="h-full bg-white rounded-full"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <p className="text-[9px] font-medium opacity-80">Terkumpul</p>
+                                                    <p className="text-sm font-bold">{formatIDR(goal.currentAmount)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-medium opacity-80">Target</p>
+                                                    <p className="text-sm font-bold">{formatIDR(goal.targetAmount)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 pt-2 border-t border-white/20">
+                                                <p className="text-[9px] font-medium opacity-80">Sisa Target</p>
+                                                <p className="text-base font-bold">{formatIDR(remaining)}</p>
+                                            </div>
                                         </div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAction('subtract')}
-                                        disabled={loading || success}
-                                        className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${action === 'subtract'
-                                                ? 'bg-rose-600 text-white'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                            } ${(loading || success) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    >
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Minus size={16} />
-                                            <span>Withdraw</span>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
 
-                            {/* Form */}
-                            <form onSubmit={handleSubmit} className="px-5 pb-5">
-                                <div className="mb-4">
-                                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                                        Amount to {action === 'add' ? 'Add' : 'Withdraw'}
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">Rp</span>
-                                        <input
-                                            type="number"
-                                            placeholder="0"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:border-indigo-300 outline-none transition-colors"
-                                            required
-                                            min="1"
-                                            disabled={loading || success}
-                                            autoFocus
-                                        />
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setAction('add'); setAmount(''); setError(''); }}
+                                                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${action === 'add'
+                                                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md'
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    }`}
+                                            >
+                                                <Plus size={14} />
+                                                <span>Tambah</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setAction('subtract'); setAmount(''); setError(''); }}
+                                                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${action === 'subtract'
+                                                    ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-md'
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    }`}
+                                            >
+                                                <Minus size={14} />
+                                                <span>Tarik</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Form */}
+                                        <form onSubmit={handleManageSubmit} className="space-y-3">
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                    {action === 'add' ? 'Jumlah Ditambahkan' : 'Jumlah Ditarik'}
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rp</span>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="0"
+                                                        value={amount}
+                                                        onChange={handleAmountChange}
+                                                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-base font-bold focus:border-emerald-300 focus:bg-white outline-none transition-all"
+                                                        required
+                                                        disabled={loading || success}
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 mt-1">
+                                                    Maksimal: {formatIDR(action === 'add' ? remaining : goal.currentAmount)}
+                                                </p>
+                                            </div>
+
+                                            {/* Quick Amount Buttons */}
+                                            <div className="flex gap-1.5 flex-wrap">
+                                                {[50000, 100000, 500000, 1000000].map((qa) => {
+                                                    const isDisabled = qa > (action === 'add' ? remaining : goal.currentAmount);
+                                                    return (
+                                                        <button
+                                                            key={qa}
+                                                            type="button"
+                                                            onClick={() => setAmount(qa.toLocaleString('id-ID'))}
+                                                            disabled={isDisabled}
+                                                            className={`flex-1 min-w-[60px] py-1.5 rounded-lg text-[10px] font-medium transition-all ${isDisabled
+                                                                ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                                                }`}
+                                                        >
+                                                            Rp {qa.toLocaleString('id-ID')}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={loading || success || !amount}
+                                                className={`w-full py-2.5 rounded-xl text-white font-bold transition-all transform active:scale-95 text-sm ${action === 'add'
+                                                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-md'
+                                                    : 'bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-md'
+                                                    } ${(loading || success || !amount) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            >
+                                                {loading ? (
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                        <span>Memproses...</span>
+                                                    </div>
+                                                ) : success ? 'Berhasil!' : `Konfirmasi ${action === 'add' ? 'Penambahan' : 'Penarikan'}`}
+                                            </button>
+                                        </form>
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-1.5">
-                                        Max: {action === 'add' ? formatIDR(remaining) : formatIDR(goal.currentAmount)}
-                                    </p>
-                                </div>
+                                ) : (
+                                    // CREATE MODE
+                                    <form onSubmit={handleCreateSubmit} className="space-y-3">
+                                        {/* Title */}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Nama Goal
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Contoh: MacBook Pro M3"
+                                                value={formData.title}
+                                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:border-indigo-300 focus:bg-white outline-none transition-all"
+                                                required
+                                                disabled={loading || success}
+                                            />
+                                        </div>
 
-                                {/* Quick Amount Buttons */}
-                                <div className="flex gap-2 mb-4">
-                                    {[50000, 100000, 500000, 1000000].map((quickAmount) => (
+                                        {/* Category */}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Kategori
+                                            </label>
+                                            <select
+                                                value={formData.category}
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:bg-white outline-none transition-all"
+                                                disabled={loading || success}
+                                            >
+                                                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Target Amount */}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Target
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rp</span>
+                                                <input
+                                                    type="text"
+                                                    placeholder="0"
+                                                    value={formData.targetAmount}
+                                                    onChange={handleTargetChange}
+                                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-base font-bold focus:border-indigo-300 focus:bg-white outline-none transition-all"
+                                                    required
+                                                    disabled={loading || success}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Deadline */}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Tenggat Waktu
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={formData.deadline}
+                                                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:bg-white outline-none transition-all"
+                                                required
+                                                min={new Date().toISOString().split('T')[0]}
+                                                disabled={loading || success}
+                                            />
+                                        </div>
+
+                                        {/* Icon Selection */}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Pilih Icon
+                                            </label>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                                {ICONS.slice(0, 8).map(icon => {
+                                                    const IconComp = icon.component;
+                                                    const isSelected = formData.icon === icon.name;
+                                                    return (
+                                                        <button
+                                                            key={icon.name}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, icon: icon.name })}
+                                                            className={`flex items-center justify-center gap-1 p-1.5 rounded-lg border transition-all ${isSelected
+                                                                ? `border-indigo-400 bg-indigo-50 text-indigo-600`
+                                                                : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'
+                                                                }`}
+                                                        >
+                                                            <IconComp size={12} />
+                                                            <span className="text-[9px] font-medium">{icon.name}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* 🔥 Color Selection - SOLID COLORS untuk backend */}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Warna Tema
+                                            </label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {SOLID_COLORS.map(color => (
+                                                    <button
+                                                        key={color.value}
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, color: color.value })}
+                                                        className={`w-7 h-7 rounded-lg transition-all ${color.class} ${formData.color === color.value
+                                                            ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110'
+                                                            : 'opacity-70 hover:opacity-100 hover:scale-105'
+                                                            }`}
+                                                        title={color.label}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Preview Card - pakai gradient untuk tampilan */}
+                                        <div className={`p-3 rounded-xl bg-gradient-to-r ${getGradientFromSolid(formData.color)} text-white`}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                                                    <IconComponent size={16} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm">{formData.title || 'Nama Goal'}</p>
+                                                    <p className="text-[10px] opacity-80">{formData.category}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-[9px] opacity-80">Target</p>
+                                                    <p className="text-xs font-bold">{formData.targetAmount ? formatIDR(getNumericTarget()) : 'Rp 0'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[9px] opacity-80">Tenggat</p>
+                                                    <p className="text-xs font-bold">{formData.deadline ? new Date(formData.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '—'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Submit Button */}
                                         <button
-                                            key={quickAmount}
-                                            type="button"
-                                            onClick={() => handleQuickAmount(quickAmount)}
+                                            type="submit"
                                             disabled={loading || success}
-                                            className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600 transition-colors disabled:opacity-50"
+                                            className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                         >
-                                            Rp {quickAmount.toLocaleString()}
+                                            {loading ? (
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                    <span>Membuat...</span>
+                                                </div>
+                                            ) : success ? 'Berhasil!' : 'Buat Goal'}
                                         </button>
-                                    ))}
-                                </div>
-
-                                {/* Submit Button */}
-                                <button
-                                    type="submit"
-                                    disabled={loading || success}
-                                    className={`w-full py-3 rounded-lg text-white font-medium transition-colors disabled:opacity-50 ${action === 'add'
-                                            ? 'bg-indigo-600 hover:bg-indigo-700'
-                                            : 'bg-rose-600 hover:bg-rose-700'
-                                        }`}
-                                >
-                                    {loading ? 'Processing...' : success ? 'Success!' : `Confirm ${action === 'add' ? 'Addition' : 'Withdrawal'}`}
-                                </button>
-                            </form>
+                                    </form>
+                                )}
+                            </div>
                         </motion.div>
                     </div>
                 </>
